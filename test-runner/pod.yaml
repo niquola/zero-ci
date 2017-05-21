@@ -10,8 +10,7 @@ spec:
     image: eu.gcr.io/aidbox-next/zero-ci-runner:0.0.1
     imagePullPolicy: Always
     command:
-    - docker
-    - ps
+    - ./runme
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
