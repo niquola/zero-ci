@@ -4,6 +4,6 @@ set -o xtrace
 
 docker build -t eu.gcr.io/aidbox-next/zero-ci-test:0.0.1 .
 
-docker login -u _json_key -p "$DOCKER_KEY" https://gcr.io
+docker login -u _json_key -p "$DOCKER_KEY" https://eu.gcr.io
 
 docker push eu.gcr.io/aidbox-next/zero-ci-test:0.0.1
