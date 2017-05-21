@@ -2,12 +2,16 @@
 set -e
 set -o xtrace
 
+mkdir /workspace
 
 if [ -z "$DONT_PULL" ]; then
-  ls /project/.git || git clone $REPO /project;
+  ls /workspace/.git || git clone $REPO /workspace;
+  cd /workspace;
   git pull;
 else
   export KUBECONFIG=/root/.kube/config
 fi
+
+cd /workspace
 
 exec "$@"

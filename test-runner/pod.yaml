@@ -15,6 +15,9 @@ spec:
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
+    env:
+    - name: REPO
+      value: git@github.com:niquola/zero-ci.git
   volumes:
   - name: docker-sock
     hostPath:
