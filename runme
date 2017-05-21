@@ -3,4 +3,4 @@ set -e
 set -o xtrace
 
 docker build -t eu.gcr.io/aidbox-next/zero-ci-test:0.0.1 .
-docker push eu.gcr.io/aidbox-next/zero-ci-test:0.0.1 .
+docker push eu.gcr.io/aidbox-next/zero-ci-test:0.0.1
