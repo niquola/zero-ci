@@ -9,14 +9,17 @@ spec:
   - name: zero-ci
     image: eu.gcr.io/aidbox-next/zero-ci-runner:0.0.1
     imagePullPolicy: Always
-    command:
-    - ./runme
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
     env:
     - name: REPO
-      value: git@github.com:niquola/zero-ci.git
+      value: https://github.com/niquola/zero-ci.git
+    - name: DOCKER_KEY
+      valueFrom:
+        secretKeyRef:
+          name: docker-registry
+          key: key
   volumes:
   - name: docker-sock
     hostPath:
