@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+set -o xtrace
+
+
+if [ -z "$DONT_PULL" ]; then
+  ls /project/.git || git clone $REPO /project;
+  git pull;
+else
+  export KUBECONFIG=/root/.kube/config
+fi
+
+exec "$@"
