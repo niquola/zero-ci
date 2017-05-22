@@ -5,4 +5,4 @@ metadata:
   namespace: default
 data:
   zeroci.repo: "https://github.com/niquola/zero-ci.git"
-  zeroci.access_token: "ups"
+  zeroci.cmd: "webhook"

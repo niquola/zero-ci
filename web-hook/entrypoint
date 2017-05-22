@@ -6,6 +6,8 @@ echo 'strore env variables for hook'
 
 env | sed "s/^/export /g" > /envars
 
+export KUBECONFIG=/root/.kube/config
+
 echo 'starting nginx'
 
 nginx

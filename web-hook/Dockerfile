@@ -133,6 +133,36 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& ln -sf /dev/stdout /var/log/nginx/access.log \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log
 
+ARG LUAROCKS_VERSION="2.3.0"
+
+RUN apk add --update \
+            --no-cache \
+            --virtual .build-deps \
+            wget \
+            make \
+            git \
+            unzip \
+            openssl \
+            openssl-dev \
+            build-base \
+            lua \
+            lua-dev \
+ && wget http://luarocks.org/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
+ && tar zxpf luarocks-${LUAROCKS_VERSION}.tar.gz \
+ && cd luarocks-${LUAROCKS_VERSION} \
+ && ./configure \
+ && make bootstrap \
+ && luarocks install basexx \
+ && luarocks install md5 \
+ && luarocks install lua-cjson \
+ && luarocks install lua-resty-hmac \
+ && luarocks install lua-resty-jwt \
+ && luarocks install lua-resty-string \
+ && rm -rf /luarocks-${LUAROCKS_VERSION} \
+           /luarocks-${LUAROCKS_VERSION}.tar.gz \
+ && apk del .build-deps
+
+
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80 443
