@@ -7,10 +7,10 @@ spec:
   template:
     metadata:
       labels:
-        app: {{template "fullname" .}}
+        app: web-hook
     spec:
       containers:
       - name: web-hook
-        image:  nginx
+        image:  aidbox/zero-ci-hook:0.0.1
         ports:
-        - containerPort: 443
+        - containerPort: 80
