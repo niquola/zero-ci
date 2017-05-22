@@ -34,10 +34,14 @@ ngx.say(exec("cd /workspace/" .. repo_key .. " && git pull"))
 ngx.say("\nls repo");
 ngx.say(exec("ls -lah /workspace/" .. repo_key))
 
-local repo_cmd = value.data[(repo_key .. ".command")] or "./runme"
+local repo_cmd = value.data[(repo_key .. ".command")] or "./webhook"
 
 ngx.say("\nrun " .. repo_cmd);
 ngx.say("result:" .. exec("cd /workspace/" .. repo_key .. " && ls -lah && " .. repo_cmd .. '2&> 1'))
+
+local env = "(source /envars || echo ups ) && export KUBECONFIG=/root/.kube/config && cd /workspace/" .. repo_key
+
+ngx.say(exec( env .. " && " .. repo_cmd ))
 
 ngx.say("DONE...")
 
