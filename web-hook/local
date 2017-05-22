@@ -1,0 +1,9 @@
+KEY="$(kubectl get secrets docker-registry -o json | jq -r '.data.key' | base64 --decode)"
+
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ~/.kube:/root/.kube \
+  -v `pwd`:/web-hook \
+  -e DOCKER_KEY="$KEY" \
+  -p 8888:80 \
+  -it aidbox/zero-ci-hook:0.0.1

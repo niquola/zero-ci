@@ -1,0 +1,8 @@
+KEY="$(kubectl get secrets docker-registry -o json | jq -r '.data.key' | base64 --decode)"
+
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ~/.kube:/root/.kube \
+  -e REPO=https://github.com/niquola/zero-ci.git \
+  -e DOCKER_KEY="$KEY" \
+  -it aidbox/zero-ci-base:0.0.1

@@ -4,7 +4,7 @@ set -o xtrace
 
 mkdir /workspace
 
-if [ -z "$DONT_PULL" ]; then
+iF [ -z "$DONT_PULL" ]; then
   ls /workspace/.git || git clone $REPO /workspace;
   cd /workspace;
   git pull;

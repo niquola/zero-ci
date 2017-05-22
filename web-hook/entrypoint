@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+set -o xtrace
+
+echo 'strore env variables for hook'
+
+env | sed "s/^/export /g" > /envars
+
+echo 'starting nginx'
+
+nginx

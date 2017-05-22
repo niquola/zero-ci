@@ -2,19 +2,19 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: zero-ci
+  name: {{ template "fullname" . }}
 spec:
   restartPolicy: Never
   containers:
   - name: zero-ci
-    image: eu.gcr.io/aidbox-next/zero-ci-runner:0.0.1
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
     imagePullPolicy: Always
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
     env:
     - name: REPO
-      value: https://github.com/niquola/zero-ci.git
+      value: "{{ .Values.repo }}"
     - name: DOCKER_KEY
       valueFrom:
         secretKeyRef:

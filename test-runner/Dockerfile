@@ -16,5 +16,7 @@ RUN apk add --no-cache git
 ADD entrypoint /entrypoint
 RUN chmod u+x /entrypoint
 
+VOLUME /workspace
+
 ENV DOCKER_API_VERSION 1.23
 ENTRYPOINT ["/entrypoint"]

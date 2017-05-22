@@ -1,0 +1,5 @@
+replicaCount: 1
+repo: https://github.com/niquola/zero-ci.git
+image:
+  repository: eu.gcr.io/aidbox-next/zero-ci-runner
+  tag: 0.0.1
