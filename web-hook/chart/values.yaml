@@ -1,0 +1,4 @@
+replicaCount: 1
+server: https://ci.health-samurai.io
+fullname: web-hook
+

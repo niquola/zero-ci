@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: web-hook
+spec:
+  tls:
+    - secretName: tls
+  rules:
+  - host: ci.health-samurai.io
+    http:
+      paths:
+      - backend:
+          serviceName: web-hook
+          servicePort: 80
