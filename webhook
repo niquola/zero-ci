@@ -2,9 +2,6 @@
 set -e
 set -o xtrace
 
-source /envars
-env
-
 DATE=`date +%Y-%m-%d--%H-%M-%S`
 COMMIT=`git rev-parse HEAD`
 

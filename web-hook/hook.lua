@@ -27,18 +27,18 @@ if repo_url == nil then
   return
 end
 
-ngx.say("clone: " .. repo_url );
+ngx.say("\nclone: " .. repo_url );
 ngx.say(exec("mkdir -p /workspace && cd /workspace && git clone " .. repo_url .. " " .. repo_key))
-ngx.say("pull repo");
+ngx.say("\npull repo");
 ngx.say(exec("cd /workspace/" .. repo_key .. " && git pull"))
-ngx.say("ls repo");
+ngx.say("\nls repo");
 ngx.say(exec("ls -lah /workspace/" .. repo_key))
 
 local repo_cmd = value.data[(repo_key .. ".command")] or "./runme"
 
-ngx.say("run " .. repo_cmd);
-ngx.say(exec("cd /workspace/" .. repo_key .. " && " .. repo_cmd))
+ngx.say("\nrun " .. repo_cmd);
+ngx.say("result:" .. exec("cd /workspace/" .. repo_key .. " && ls -lah && " .. repo_cmd .. '2&> 1'))
 
-ngx.say("DONE")
+ngx.say("DONE...")
 
 ngx.exit(200)
