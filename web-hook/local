@@ -5,5 +5,5 @@ docker run --rm \
   -v ~/.kube:/root/.kube \
   -v `pwd`:/web-hook \
   -e DOCKER_KEY="$KEY" \
-  -p 8888:80 \
+  -p 8081:8888 \
   -it aidbox/zero-ci-hook:0.0.1

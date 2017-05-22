@@ -1,180 +1,77 @@
 FROM aidbox/zero-ci-base:0.0.1
 
-ENV NGINX_VERSION 1.11.3
-ENV DEVEL_KIT_MODULE_VERSION 0.3.0
-ENV LUA_MODULE_VERSION 0.10.8
+# Java Version and other ENV
+ENV JAVA_VERSION_MAJOR=8 \
+    JAVA_VERSION_MINOR=131 \
+    JAVA_VERSION_BUILD=11 \
+    JAVA_PACKAGE=jdk \
+    JAVA_JCE=standard \
+    JAVA_HOME=/opt/jdk \
+    PATH=${PATH}:/opt/jdk/bin \
+    GLIBC_VERSION=2.23-r3 \
+    LANG=C.UTF-8
 
-ENV LUAJIT_LIB=/usr/lib
-ENV LUAJIT_INC=/usr/include/luajit-2.1
+# do all in one step
+RUN set -ex && \
+    apk upgrade --update && \
+    apk add --update libstdc++ curl ca-certificates bash && \
+    for pkg in glibc-${GLIBC_VERSION} glibc-bin-${GLIBC_VERSION} glibc-i18n-${GLIBC_VERSION}; do curl -sSL https://github.com/andyshinn/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/${pkg}.apk -o /tmp/${pkg}.apk; done && \
+    apk add --allow-untrusted /tmp/*.apk && \
+    rm -v /tmp/*.apk && \
+    ( /usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 C.UTF-8 || true ) && \
+    echo "export LANG=C.UTF-8" > /etc/profile.d/locale.sh && \
+    /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && \
+    mkdir /opt && \
+    curl -jksSLH "Cookie: oraclelicense=accept-securebackup-cookie" -o /tmp/java.tar.gz \
+      http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/d54c1d3a095b4ff2b6607d096fa80163/${JAVA_PACKAGE}-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz && \
+    gunzip /tmp/java.tar.gz && \
+    tar -C /opt -xf /tmp/java.tar && \
+    ln -s /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} /opt/jdk && \
+    if [ "${JAVA_JCE}" == "unlimited" ]; then echo "Installing Unlimited JCE policy" >&2 && \
+      curl -jksSLH "Cookie: oraclelicense=accept-securebackup-cookie" -o /tmp/jce_policy-${JAVA_VERSION_MAJOR}.zip \
+        http://download.oracle.com/otn-pub/java/jce/${JAVA_VERSION_MAJOR}/jce_policy-${JAVA_VERSION_MAJOR}.zip && \
+      cd /tmp && unzip /tmp/jce_policy-${JAVA_VERSION_MAJOR}.zip && \
+      cp -v /tmp/UnlimitedJCEPolicyJDK8/*.jar /opt/jdk/jre/lib/security; \
+    fi && \
+    sed -i s/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=10/ $JAVA_HOME/jre/lib/security/java.security && \
+    apk del curl glibc-i18n && \
+    rm -rf /opt/jdk/*src.zip \
+           /opt/jdk/lib/missioncontrol \
+           /opt/jdk/lib/visualvm \
+           /opt/jdk/lib/*javafx* \
+           /opt/jdk/jre/plugin \
+           /opt/jdk/jre/bin/javaws \
+           /opt/jdk/jre/bin/jjs \
+           /opt/jdk/jre/bin/orbd \
+           /opt/jdk/jre/bin/pack200 \
+           /opt/jdk/jre/bin/policytool \
+           /opt/jdk/jre/bin/rmid \
+           /opt/jdk/jre/bin/rmiregistry \
+           /opt/jdk/jre/bin/servertool \
+           /opt/jdk/jre/bin/tnameserv \
+           /opt/jdk/jre/bin/unpack200 \
+           /opt/jdk/jre/lib/javaws.jar \
+           /opt/jdk/jre/lib/deploy* \
+           /opt/jdk/jre/lib/desktop \
+           /opt/jdk/jre/lib/*javafx* \
+           /opt/jdk/jre/lib/*jfx* \
+           /opt/jdk/jre/lib/amd64/libdecora_sse.so \
+           /opt/jdk/jre/lib/amd64/libprism_*.so \
+           /opt/jdk/jre/lib/amd64/libfxplugins.so \
+           /opt/jdk/jre/lib/amd64/libglass.so \
+           /opt/jdk/jre/lib/amd64/libgstreamer-lite.so \
+           /opt/jdk/jre/lib/amd64/libjavafx*.so \
+           /opt/jdk/jre/lib/amd64/libjfx*.so \
+           /opt/jdk/jre/lib/ext/jfxrt.jar \
+           /opt/jdk/jre/lib/ext/nashorn.jar \
+           /opt/jdk/jre/lib/oblique-fonts \
+           /opt/jdk/jre/lib/plugin.jar \
+           /tmp/* /var/cache/apk/* && \
+    echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf
+# EOF
 
-RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
-	&& CONFIG="\
-		--prefix=/etc/nginx \
-		--sbin-path=/usr/sbin/nginx \
-		--modules-path=/usr/lib/nginx/modules \
-		--conf-path=/etc/nginx/nginx.conf \
-		--error-log-path=/var/log/nginx/error.log \
-		--http-log-path=/var/log/nginx/access.log \
-		--pid-path=/var/run/nginx.pid \
-		--lock-path=/var/run/nginx.lock \
-		--http-client-body-temp-path=/var/cache/nginx/client_temp \
-		--http-proxy-temp-path=/var/cache/nginx/proxy_temp \
-		--http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
-		--http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
-		--http-scgi-temp-path=/var/cache/nginx/scgi_temp \
-		--user=nginx \
-		--group=nginx \
-		--with-http_ssl_module \
-		--with-http_realip_module \
-		--with-http_addition_module \
-		--with-http_sub_module \
-		--with-http_dav_module \
-		--with-http_flv_module \
-		--with-http_mp4_module \
-		--with-http_gunzip_module \
-		--with-http_gzip_static_module \
-		--with-http_random_index_module \
-		--with-http_secure_link_module \
-		--with-http_stub_status_module \
-		--with-http_auth_request_module \
-		--with-http_xslt_module=dynamic \
-		--with-http_image_filter_module=dynamic \
-		--with-http_geoip_module \
-		--with-http_perl_module=dynamic \
-		--with-threads \
-		--with-stream \
-		--with-stream_ssl_module \
-		--with-stream_geoip_module=dynamic \
-		--with-http_slice_module \
-		--with-mail \
-		--with-mail_ssl_module \
-		--with-file-aio \
-		--with-http_v2_module \
-		--with-ipv6 \
-		--add-module=/usr/src/ngx_devel_kit-$DEVEL_KIT_MODULE_VERSION \
-		--add-module=/usr/src/lua-nginx-module-$LUA_MODULE_VERSION \
-	" \
-	&& addgroup -S nginx \
-	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
-	&& apk add --no-cache --virtual .build-deps \
-		gcc \
-		libc-dev \
-		make \
-		openssl-dev \
-		pcre-dev \
-		zlib-dev \
-		linux-headers \
-		curl \
-		gnupg \
-		libxslt-dev \
-		gd-dev \
-		geoip-dev \
-		perl-dev \
-		luajit-dev \
-	&& curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
-	&& curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
-	&& curl -fSL https://github.com/simpl/ngx_devel_kit/archive/v$DEVEL_KIT_MODULE_VERSION.tar.gz -o ndk.tar.gz \
-	&& curl -fSL https://github.com/openresty/lua-nginx-module/archive/v$LUA_MODULE_VERSION.tar.gz -o lua.tar.gz \
-	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$GPG_KEYS" \
-	&& gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
-	&& rm -r "$GNUPGHOME" nginx.tar.gz.asc \
-	&& mkdir -p /usr/src \
-	&& tar -zxC /usr/src -f nginx.tar.gz \
-	&& tar -zxC /usr/src -f ndk.tar.gz \
-	&& tar -zxC /usr/src -f lua.tar.gz \
-	&& rm nginx.tar.gz ndk.tar.gz lua.tar.gz \
-	&& cd /usr/src/nginx-$NGINX_VERSION \
-	&& ./configure $CONFIG --with-debug \
-	&& make -j$(getconf _NPROCESSORS_ONLN) \
-	&& mv objs/nginx objs/nginx-debug \
-	&& mv objs/ngx_http_xslt_filter_module.so objs/ngx_http_xslt_filter_module-debug.so \
-	&& mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
-	&& mv objs/ngx_http_perl_module.so objs/ngx_http_perl_module-debug.so \
-	&& mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so \
-	&& ./configure $CONFIG \
-	&& make -j$(getconf _NPROCESSORS_ONLN) \
-	&& make install \
-	&& rm -rf /etc/nginx/html/ \
-	&& mkdir /etc/nginx/conf.d/ \
-	&& mkdir -p /usr/share/nginx/html/ \
-	&& install -m644 html/index.html /usr/share/nginx/html/ \
-	&& install -m644 html/50x.html /usr/share/nginx/html/ \
-	&& install -m755 objs/nginx-debug /usr/sbin/nginx-debug \
-	&& install -m755 objs/ngx_http_xslt_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_xslt_filter_module-debug.so \
-	&& install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
-	&& install -m755 objs/ngx_http_perl_module-debug.so /usr/lib/nginx/modules/ngx_http_perl_module-debug.so \
-	&& install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
-	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
-	&& strip /usr/sbin/nginx* \
-	&& strip /usr/lib/nginx/modules/*.so \
-	&& rm -rf /usr/src/nginx-$NGINX_VERSION \
-	\
-	# Bring in gettext so we can get `envsubst`, then throw
-	# the rest away. To do this, we need to install `gettext`
-	# then move `envsubst` out of the way so `gettext` can
-	# be deleted completely, then move `envsubst` back.
-	&& apk add --no-cache --virtual .gettext gettext \
-	&& mv /usr/bin/envsubst /tmp/ \
-	\
-	&& runDeps="$( \
-		scanelf --needed --nobanner /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
-			| awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
-			| sort -u \
-			| xargs -r apk info --installed \
-			| sort -u \
-	)" \
-	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
-	&& apk del .build-deps \
-	&& apk del .gettext \
-	&& mv /tmp/envsubst /usr/local/bin/ \
-	\
-	# forward request and error logs to docker log collector
-	&& ln -sf /dev/stdout /var/log/nginx/access.log \
-	&& ln -sf /dev/stderr /var/log/nginx/error.log
+ENTRYPOINT []
 
-ARG LUAROCKS_VERSION="2.3.0"
+ADD target/zeroci.jar /zeroci.jar
 
-RUN apk add --update \
-            --no-cache \
-            --virtual .build-deps \
-            wget \
-            make \
-            git \
-            unzip \
-            openssl \
-            openssl-dev \
-            build-base \
-            lua \
-            lua-dev \
- && wget http://luarocks.org/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
- && tar zxpf luarocks-${LUAROCKS_VERSION}.tar.gz \
- && cd luarocks-${LUAROCKS_VERSION} \
- && ./configure \
- && make bootstrap \
- && luarocks install basexx \
- && luarocks install md5 \
- && luarocks install lua-cjson \
- && luarocks install lua-resty-hmac \
- && luarocks install lua-resty-jwt \
- && luarocks install lua-resty-string \
- && rm -rf /luarocks-${LUAROCKS_VERSION} \
-           /luarocks-${LUAROCKS_VERSION}.tar.gz \
- && apk del .build-deps
-
-
-COPY nginx.conf /etc/nginx/nginx.conf
-
-EXPOSE 80 443
-
-ENV DOCKER_API_VERSION 1.23
-ENV GITHUB_REPO "todo"
-ENV GITHUB_TOKEN "todo"
-
-RUN mkdir /web-hook 
-COPY hook.lua /web-hook/hook.lua
-
-ADD entrypoint /entrypoint
-RUN chmod u+x /entrypoint
-
-ENTRYPOINT ["/entrypoint"]
+CMD KUBECONFIG=/root/.kube/config java -cp /zeroci.jar clojure.main -m zeroci.core
