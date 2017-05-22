@@ -36,9 +36,9 @@ ngx.say(exec("ls -lah /workspace/" .. repo_key))
 
 local repo_cmd = value.data[(repo_key .. ".command")] or "./runme"
 
+ngx.say("run " .. repo_cmd);
 ngx.say(exec("cd /workspace/" .. repo_key .. " && " .. repo_cmd))
 
 ngx.say("DONE")
 
 ngx.exit(200)
-
