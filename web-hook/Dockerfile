@@ -72,6 +72,6 @@ RUN set -ex && \
 
 ENTRYPOINT []
 
-ADD target/zeroci.jar /zeroci.jar
+ADD target/zeroci.jar /var/zeroci.jar
 
-CMD KUBECONFIG=/root/.kube/config java -cp /zeroci.jar clojure.main -m zeroci.core
+CMD KUBECONFIG=/root/.kube/config java -cp /var/zeroci.jar clojure.main -m zeroci.core

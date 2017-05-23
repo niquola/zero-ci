@@ -6,6 +6,7 @@
    [clojure.tools.logging :as log]
    [clojure.java.shell :as sh]
    [cheshire.core :as json]
+   [pandect.algo.sha1 :refer [sha1-hmac]]
    [route-map.core :as route-map]
    [ring.util.codec])
   (:gen-class))
@@ -61,12 +62,24 @@
       {:body (json/generate-string res)}
       {:body (str res) :status 500})))
 
+(defn verify
+  [{headers :headers body :body :as req}]
+  (let [signature (get headers "x-hub-signature")
+        payload (slurp body)
+        hash (str "sha1=" (sha1-hmac payload "secret")) ]
+    (if (= signature hash)
+      {:body payload}
+      {:status 401 })))
+
+
 (def webhook
-  (-> run-command
-      checkout-project
-      get-config
-      get-repositories
-      repo-key))
+  (-> verify
+      ;run-command
+      ;checkout-project
+      ;get-config
+      ;get-repositories
+      ;repo-key
+      ))
 
 (defn welcome [_]
   {:body "Welocome to zeroci"})
@@ -80,7 +93,7 @@
 (def routes
   {:GET #'welcome
    "builds" {:GET #'builds}
-   "webhook" {[:repo] {:GET #'webhook}}})
+   "webhook"  {:POST #'webhook}})
 
 
 (defn app [{meth :request-method uri :uri :as req}]

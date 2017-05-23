@@ -13,7 +13,6 @@
 
 ;; http://localhost:8001/api/v1/namespaces/default/pods/sansara-test-2017-05-23--04-47-37-aidbox-test-runner/log
 
-(def client (c/create-client))
 
 (defonce reqs (atom []))
 
@@ -59,17 +58,18 @@
 
 
 (defn watch []
-  (println "WATCH")
-  (swap! reqs conj
-         (req/execute-request
-          client
-          (req/prepare-request :get url :timeout -1)
-          :part (fn [_ baos] (println "PART" baos) [nil :continue])
-          :completed (fn [_]
-                       (println "DONE"))
-          :error (fn [_ t]
-                   (println "ERROR" (type t))
-                   (.start (Thread. watch)) t))))
+  (let  [client (c/create-client)]
+    (println "WATCH")
+    (swap! reqs conj
+           (req/execute-request
+             client
+             (req/prepare-request :get url :timeout -1)
+             :part (fn [_ baos] (println "PART" baos) [nil :continue])
+             :completed (fn [_]
+                          (println "DONE"))
+             :error (fn [_ t]
+                      (println "ERROR" (type t))
+                      (.start (Thread. watch)) t)))))
 
 
 (comment

@@ -12,6 +12,7 @@
                  [http.async.client "1.2.0"]
                  [route-map "0.0.4"]
                  [hiccup "1.0.5"]
+                 [pandect "0.6.1"]
                  [clj-json-patch "0.1.4"]
                  [http-kit "2.2.0"]]
   :uberjar-name "zeroci.jar"

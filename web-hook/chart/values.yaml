@@ -4,4 +4,4 @@ fullname: web-hook
 
 image:
   repository: aidbox/zero-ci-hook
-  tag: 0.0.1
+  tag: 0.0.4

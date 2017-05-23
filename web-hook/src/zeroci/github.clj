@@ -10,6 +10,7 @@
       (json/parse-string keyword)
       (->> (map :url))))
 
+
 ;; https://gist.github.com/whitlockjc/0373e7bc9f0e883fab7281d9e1f4f684
 
 
