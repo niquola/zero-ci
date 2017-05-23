@@ -1,0 +1,6 @@
+java -cp target/zeroci-agent.jar clojure.main -m zci-agent.core
+
+# APISERVER=$(kubectl config view | grep server | cut -f 2- -d ":" | tr -d " ")
+# TOKEN=$(kubectl describe secret $(kubectl get secrets | grep default | cut -f1 -d ' ') | grep -E '^token' | cut -f2 -d':' | tr -d '\t')
+# BUILD_ID=build-1
+# docker run --rm -e KUBE_URL=$APISERVER -e KUBE_TOKEN=$TOKEN -e BUILD_ID="build-1" -v /var/run/docker.sock:/var/run/docker.sock aidbox/zero-ci-agent:0.0.1

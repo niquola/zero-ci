@@ -1,0 +1,22 @@
+apiVersion: "zeroci.io/v1"
+kind: Build
+metadata:
+  name: build-2
+  label:
+    system: ci
+status: peinding
+pipeline:
+ - name: "step-1"
+   image: "busybox" 
+   command:
+   - pwd
+ - name: "step-2"
+   image: "busybox" 
+   command:
+   - ls
+   - "-lah"
+   - "/"
+ - name: "step-3"
+   image: "busybox" 
+   command:
+   - failo
