@@ -11,6 +11,7 @@ spec:
     spec:
       containers:
       - name: web-hook
-        image:  aidbox/zero-ci-hook:0.0.1
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: Always
         ports:
-        - containerPort: 80
+        - containerPort: 8888

@@ -9,6 +9,10 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [ch.qos.logback/logback-classic "1.2.2"]
                  [kubernetes-api "0.1.0"]
+                 [http.async.client "1.2.0"]
+                 [route-map "0.0.4"]
+                 [hiccup "1.0.5"]
+                 [clj-json-patch "0.1.4"]
                  [http-kit "2.2.0"]]
   :uberjar-name "zeroci.jar"
   :profiles {:uberjar {:aot :all :omit-source true}})

@@ -2,15 +2,15 @@
   (:require
    [clojure.string :as str]
    [org.httpkit.server :as http-kit]
+   [org.httpkit.client :as http-client]
    [clojure.tools.logging :as log]
    [clojure.java.shell :as sh]
    [cheshire.core :as json]
+   [route-map.core :as route-map]
    [ring.util.codec])
   (:gen-class))
 
 (defonce server (atom nil))
-
-(def repos (atom nil))
 
 (defn exec [& args]
   (log/info "Execute: " args)
@@ -33,11 +33,9 @@
 
 (defn get-repositories [h]
   (fn [req]
-    (if-let [rs (or @repos
-                 (reset! repos 
-                         (let [res (exec "kubectl" "get" "configmaps" "repositories" "-o" "json")]
-                           (println res)
-                           (process-keys (json/parse-string (:out res))))))]
+    (if-let [rs (let [res (exec "kubectl" "get" "configmaps" "repositories" "-o" "json")]
+                  (log/info "Repositories" res)
+                  (process-keys (json/parse-string (:out res))))]
       (h (assoc req :repositories rs))
       {:body (str "Could not get repositories configmap") :status 500})))
 
@@ -63,14 +61,32 @@
       {:body (json/generate-string res)}
       {:body (str res) :status 500})))
 
-
-(def handle
+(def webhook
   (-> run-command
       checkout-project
       get-config
       get-repositories
       repo-key))
 
+(defn welcome [_]
+  {:body "Welocome to zeroci"})
+
+(defn builds [_]
+  (let [url "http://localhost:8001/api/v1/namespaces/default/pods?labelSelector=system=ci"
+        url "http://localhost:8001/apis/zeroci.io/v1/builds"
+        res (http-client/get url)]
+    {:body (:body @res)}))
+
+(def routes
+  {:GET #'welcome
+   "builds" {:GET #'builds}
+   "webhook" {[:repo] {:GET #'webhook}}})
+
+
+(defn app [{meth :request-method uri :uri :as req}]
+  (if-let [res (route-map/match [meth uri] routes)]
+    ((:match res)  (assoc req :route-params req))
+    {:status 404 :body (str meth " " uri " Not found")}))
 
 (defn restart []
   ;; todo validate config
@@ -79,8 +95,7 @@
     (@server)
     (reset! server nil))
   (log/info "Starting server on " 8888)
-  (reset! server (http-kit/run-server #'handle {:port 8888})))
-
+  (reset! server (http-kit/run-server #'app {:port 8888})))
 
 
 (defn -main [& args]
